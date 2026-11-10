@@ -102,16 +102,6 @@ def test_alembic_upgrade_preserves_audits_and_replacement_receipts(db_url, tmp_p
                     created_at=sa.func.now(),
                 )
             )
-            # The release branch extends the trigger state check after this predecessor.
-            sa.Table(
-                "trigger_event",
-                sa.MetaData(),
-                sa.Column("state", sa.String(), nullable=False),
-                sa.CheckConstraint(
-                    "state IN ('pending', 'claimed', 'dispatched', 'completed', 'failed', 'dead')",
-                    name="ck_trigger_event_state",
-                ),
-            ).create(conn)
             config = _alembic_config(tmp_path, conn)
             command.stamp(config, NEW.down_revision)
             command.upgrade(config, "head")
@@ -272,7 +262,7 @@ def test_upgrade_completes_partial_draft_schema(db_url, column):  # noqa: F811
 def test_represented_identity_and_release_migrations_have_one_head():
     scripts = ScriptDirectory(str(Path(NEW.__file__).resolve().parents[1]))
     head = scripts.get_current_head()
-    assert head == "b7e9a3c5d801"  # pragma: allowlist secret
-    assert NEW.down_revision == "f4b8c1d2e3a6"  # pragma: allowlist secret
+    assert head == NEW.revision
+    assert NEW.down_revision == "f6a2c8e4b901"  # pragma: allowlist secret
     revisions = {revision.revision for revision in scripts.iterate_revisions(head, "base")}
     assert {NEW.revision, "c6a81d3e9502", "f6a2c8e4b901"} <= revisions  # pragma: allowlist secret
